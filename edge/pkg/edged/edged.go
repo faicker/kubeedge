@@ -752,27 +752,9 @@ func (e *edged) syncLoopIteration(plegCh <-chan *pleg.PodLifecycleEvent, houseke
 					break
 				}
 				if plegEvent.Type == pleg.ContainerDied {
-					if pod.Spec.RestartPolicy == v1.RestartPolicyNever {
-						break
+					if containerID, ok := plegEvent.Data.(string); ok {
+						klog.Infof("sync loop get event container [%s] died, ignore it now.", containerID)
 					}
-					var containerCompleted bool
-					if pod.Spec.RestartPolicy == v1.RestartPolicyOnFailure {
-						for _, containerStatus := range pod.Status.ContainerStatuses {
-							if containerStatus.State.Terminated != nil && containerStatus.State.Terminated.ExitCode == 0 {
-								containerCompleted = true
-								break
-							}
-						}
-						if containerCompleted {
-							break
-						}
-					}
-					klog.Errorf("sync loop get event container died, restart pod [%s]", pod.Name)
-					key := types.NamespacedName{
-						Namespace: pod.Namespace,
-						Name:      pod.Name,
-					}
-					e.podAdditionQueue.Add(key.String())
 				} else {
 					klog.Infof("sync loop get event [%s], ignore it now.", plegEvent.Type)
 				}
