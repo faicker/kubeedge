@@ -262,6 +262,11 @@ func (mh *MessageHandle) ServeConn(hi hubio.CloudHubIO, info *model.HubInfo) {
 
 // RegisterNode register node in cloudhub for the incoming connection
 func (mh *MessageHandle) RegisterNode(hi hubio.CloudHubIO, info *model.HubInfo) error {
+	if _, ok := mh.Nodes.Load(info.NodeID); ok {
+		hi.Close()
+		return fmt.Errorf("waiting for the old unregistered, close the new connection")
+	}
+
 	mh.MessageQueue.Connect(info)
 
 	err := mh.MessageQueue.Publish(constructConnectMessage(info, true))
