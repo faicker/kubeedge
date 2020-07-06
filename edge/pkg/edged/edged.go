@@ -912,11 +912,12 @@ func (e *edged) consumePodAddition(namespacedName *types.NamespacedName) error {
 	}
 
 	podUID := pod.GetUID()
-	t, ok := e.podLastSyncTime.Load(podUID)
-	if !ok {
-		t = time.Time{}
+	var t time.Time
+	v, ok := e.podLastSyncTime.Load(podUID)
+	if ok {
+		t = v.(time.Time)
 	}
-	curPodStatus, err := e.podCache.GetNewerThan(podUID, t.(time.Time))
+	curPodStatus, err := e.podCache.GetNewerThan(podUID, t)
 	if err != nil {
 		klog.Errorf("pod %s cache newer failed: %v", podName, err)
 		return err
